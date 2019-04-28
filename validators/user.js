@@ -1,8 +1,9 @@
 validator = {};
 
-const errors = {};
 
-validator.validateRegisterInput = (name,email,password,password2) => {
+
+validator.validateRegisterInput = (name,email,username,password,password2) => {
+    const errors = {};
     const emailVerifier = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
     if(name != "" && name != null){
         if(name.trim().length == 0){
@@ -21,12 +22,27 @@ validator.validateRegisterInput = (name,email,password,password2) => {
         errors.email = "You must enter your email to continue";
     }
     if(password != "" && password != null){
-        if(password.trim().length < 6){
+        if(password.trim().length < 6 || password.trim.length > 30){
             errors.password = "Password must be between 6-30 characters long";
         }
     }
     else{
         errors.password = "You must enter your password to continue";
+    }  
+    if(username != "" && username != null){
+        if(username.trim().length == 0){
+            errors.username = "You must enter your username to continue";
+        }
+        if(username.trim().length < 6 || username.trim().length > 20){
+            errors.username = "Username must be between 6-20 characters long";
+        }
+        
+        if(username.trim().includes(" ")){
+            errors.username = "There cant be a space in username";
+        }
+    }
+    else{
+        errors.username = "You must enter your username to continue";
     }   
     if(password2 != "" && password2 != null){
         if(password2.trim().length < 6){
@@ -47,7 +63,7 @@ validator.validateRegisterInput = (name,email,password,password2) => {
 }
 
 validator.validateLoginInput = (email,password) => {
-
+    const errors = {};
     const emailVerifier = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
     if(email != "" && email != null){
         if(!emailVerifier.test(email)){
@@ -58,6 +74,7 @@ validator.validateLoginInput = (email,password) => {
         }
     }
     else{
+        
         errors.email = "You must enter your email to continue";
     }
 
