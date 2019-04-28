@@ -1,0 +1,32 @@
+ROUTE : /api/user/register
+METHOD : POST
+PARAMS : name,username,email,password
+DESC : register user in database with name,username,email,password
+
+ROUTE : /api/user/login
+METHOD : POST
+PARAMS : username,password
+DESC: login user with username & password
+
+ROUTE : /api/user/search?q=username
+METHOD : GET
+PARAMS : username
+DESC: get all the users with matching username
+
+ROUTE : /api/user/request
+METHOD : POST
+PARAMS : fromusername,tousername
+DESC : send request from one user to another user
+
+ROUTE : /api/user/request
+METHOD : GET
+PARAMS : username
+DESC : get all the requests for the user
+
+ROUTE : /api/user/message
+METHOD : POST
+PARAMS : fromusername,tousername,message
+DESC : send message from user to user and add it to database
+
+CHAT APPLICATION WITH SOCKET.IO
+REALTIME MESSAGING
