@@ -92,4 +92,47 @@ validator.validateLoginInput = (email,password) => {
 }
 
 
+validator.validateRequestInput = (id,username,profileUrl) => {
+    const errors = {};
+    const linkPattern = /^(?:http(s)?:\/\/)?[\w.-]+(?:\.[\w\.-]+)+[\w\-\._~:/?#[\]@!\$&'\(\)\*\+,;=.]+$/;
+
+    if(id != "" && id != null){
+        if(id.trim().length == 0){
+            errors.id = "No id specified";
+        }
+    }
+    else{
+        
+        errors.id = "No id specified";
+    }
+    if(username != "" && username != null){
+        if(username.trim().length == 0){
+            errors.username = "You must enter your username to continue";
+        }
+        if(username.trim().length < 6 || username.trim().length > 20){
+            errors.username = "Username must be between 6-20 characters long";
+        }
+        
+        if(username.trim().includes(" ")){
+            errors.username = "There cant be a space in username";
+        }
+    }
+    if(profileUrl != null && profileUrl != ""){
+        if(profileUrl.trim().length == 0){
+            errors.profileUrl = "No profile url specified";
+        }
+        if(!linkPattern.test(profileUrl)){
+            errors.profileUrl = "Invalid profile url";
+        }
+        
+    }
+    else{
+        errors.profileUrl = "No profile url specified";
+    }
+
+    return errors;
+
+}
+
+
 module.exports = validator;

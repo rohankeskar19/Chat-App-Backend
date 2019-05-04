@@ -18,6 +18,34 @@ const User = new mongoose.Schema({
         type : String,
         required : true
     },
+    profileUrl : {
+        type : String,
+        required: true
+    },
+    bio : {
+        type : String
+    },
+    freinds : [
+        {
+            user_id : {
+                type : String,
+                required : true
+            },
+            username : {
+                type : String,
+                required : true
+            },
+            profileUrl : {
+                type : String,
+                required : true
+            },
+            name : {
+                type : String,
+                required : true
+            }
+        }
+    ]
+    ,
     createdAt : {
         type : Date,
         default : Date.now

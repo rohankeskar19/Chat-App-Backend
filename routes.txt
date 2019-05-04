@@ -30,3 +30,9 @@ DESC : send message from user to user and add it to database
 
 CHAT APPLICATION WITH SOCKET.IO
 REALTIME MESSAGING
+
+Access key
+AKIAVLCAOPF5Z7GRNMXD
+
+Secret access key
+yKPBeCaeWsSXMs6PtBG7fL6Fd6rh5lJ9YD6SWu+u

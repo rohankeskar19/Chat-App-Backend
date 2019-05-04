@@ -13,7 +13,8 @@ Authentication.isAuthenticated = (req,res,next) => {
         jwt.verify(actualToken[1],config.secret,function(err,decoded){
             if(err) return res.status(500).json({auth : false,error : 'Failed to authenticate user'});
             else{
-                req.id = decoded.id;
+                req.user = decoded.user;
+                
                 return next();
             }
         })
