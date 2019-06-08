@@ -5,7 +5,9 @@
   "scripts": {
     "server": "nodemon server.js",
     "socket": "nodemon socketio/socket.js",
-    "app": "concurrently \"npm run server\" \"npm run socket\""
+    "app": "concurrently \"npm run server\" \"npm run socket\"",
+    "snyk-protect": "snyk protect",
+    "prepare": "npm run snyk-protect"
   },
   "keywords": [],
   "author": "",
@@ -22,10 +24,12 @@
     "multer-s3": "^2.9.0",
     "multiparty": "^4.2.1",
     "socket.io": "^2.2.0",
-    "socketio-jwt": "^4.5.0"
+    "socketio-jwt": "^4.5.0",
+    "snyk": "^1.174.1"
   },
   "devDependencies": {
     "concurrently": "^4.1.0",
     "nodemon": "^1.19.0"
-  }
+  },
+  "snyk": true
 }
