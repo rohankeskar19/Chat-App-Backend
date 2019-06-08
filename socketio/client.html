@@ -20,7 +20,7 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js"></script>
     <script>
-        var token = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNWNjY2EwZDdjMmZmNWYxMTcwOTY4NjU2IiwibmFtZSI6IlJvaGFuIEtlc2thciIsInVzZXJuYW1lIjoicm9oYW4ua2Vza2FyIiwiZW1haWwiOiJyb2hhbmtlc2thcjg5QGdtYWlsLmNvbSIsInByb2ZpbGVVcmwiOiIvL3d3dy5ncmF2YXRhci5jb20vYXZhdGFyLzE2ZGIzMzg1ZGNmNWEwNzNhOGRhMWZhODYxZmYwNTgzP3M9MjAwJnI9cGcmZD1tbSJ9LCJpYXQiOjE1NTY5OTc2NDAsImV4cCI6MTU1ODA3NzY0MH0.K_MNdPemMO_ze7kphHk8qcAvxgiP_kYjy5hUbVWFp-8";
+        var token = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNWNlZTYzYjZkOTNhOTIxMWU4NzMzNjQyIiwibmFtZSI6IlJvaGFuIEtlc2thciIsInVzZXJuYW1lIjoicm9oYW4ua2Vza2FyIiwiZW1haWwiOiJyb2hhbmtlc2thcjg5QGdtYWlsLmNvbSIsInByb2ZpbGVVcmwiOiIvL3d3dy5ncmF2YXRhci5jb20vYXZhdGFyLzE2ZGIzMzg1ZGNmNWEwNzNhOGRhMWZhODYxZmYwNTgzP3M9MjAwJnI9cGcmZD1tbSJ9LCJpYXQiOjE1NTkyMTY2NzMsImV4cCI6MTU2MDI5NjY3M30.gd5J-magCL5YL-x8-L-QUewbLnazV7CZ0othUFWN63I";
         var socket = io.connect('http://localhost:4000', {
                         query: {token: token}
                     });
@@ -30,10 +30,11 @@
                     var user = decoded.user;
                     console.log(user);
                     
-                    // socket.emit('createConversation',{
-                    //     users : [user.id,"5ccca0ffc2ff5f1170968658"]
-                    // })
-
+                    socket.emit('createConversation',{
+                        users : [user.id,"5cef843bdbdef71390959145"]
+                    })
+                    
+                    console.log("Event emmited");
 
                     
                     function parseJwt (token) {
@@ -79,6 +80,10 @@
                     socket.on("newMessage",(data) => {
                         //console.log("new Message" , data);
                         document.getElementById("messages").innerHTML += `<p>${data.fromId}</p><p>${data.content}</p>`;
+                    })
+
+                    socket.on("hi",(data) => {
+                        console.log(data);
                     })
 
                     

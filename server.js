@@ -4,6 +4,8 @@ const app = express();
 
 
 
+
+
 app.use(express.json());
 app.use(express.urlencoded({extended : false}));
 
@@ -18,6 +20,7 @@ mongoose.connect(config.mongoDB,{useNewUrlParser : true},(err)=>{
         console.log("Mongo db connected");
     }
 })
+
 
 
 app.use("/api/user",users);

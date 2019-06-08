@@ -5,9 +5,13 @@ validator = {};
 validator.validateRegisterInput = (name,email,username,password,password2) => {
     const errors = {};
     const emailVerifier = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+    
     if(name != "" && name != null){
         if(name.trim().length == 0){
             errors.name = "You must enter your name to continue";
+        }
+        if(name.trim().length > 40 || name.trim().length < 1){
+            errors.name = "Name must be between 1-40 characters long";
         }
     }
     else{
@@ -52,8 +56,6 @@ validator.validateRegisterInput = (name,email,username,password,password2) => {
     else{
         errors.password2 = "You must enter your password to continue";
     }
-    
-    
     if(!errors.password && !errors.password2){
         if(password != password2) errors.password = "Passwords do not match";
     }

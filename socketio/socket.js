@@ -1,8 +1,10 @@
 const io = require('socket.io')();
-const jwt = require('jsonwebtoken');
 const config = require('../config/keys');
-
+const jwt = require('jsonwebtoken');
 const mongoose = require("mongoose");
+const socketioJwt = require('socketio-jwt');
+const amqp = require('amqplib');
+
 
 mongoose.connect(config.mongoDB,{useNewUrlParser : true},(err)=>{
     if(!err){
@@ -17,25 +19,73 @@ const Message = require('../models/Message');
 
 const clients = {};
 
-io.use(function(socket, next){
-    if(socket.handshake.query && socket.handshake.query.token){
-        const token = socket.handshake.query.token.split(" ");
-        const actualToken = token[1];
-
-        jwt.verify(actualToken,config.secret,function(err,decoded){
+io.use(function(socket,next){
+    
+    if(socket.request.headers && socket.request.headers.authorization){
+        var token = socket.request.headers.authorization;
+        var actualToken = token.split(" ");
+        
+        jwt.verify(actualToken[1],config.secret,function(err,decoded){
             if(err) return next(new Error("Authentication error"));
             socket.user = decoded.user;
             next();
-        });
+        })
+
+
     }
     else{
         next(new Error("Authentication error"));
     }
-})
-.on('connection',function(socket){
-    
+}).on('connection',function(socket){
+ 
     clients[socket.user.id] = socket;
+
+    const conversationQueue = socket.user.id + "conversations";
+
+    const messageQueue = socket.user.id + "messages";
+
+    const open = amqp.connect('amqp://localhost');
+
+    var queueConnection;
+
+    open.then(function(conn){
+        queueConnection = conn;
+        return conn.createChannel();
+    }).then(function(channel){
+        channel.assertQueue(conversationQueue,{
+            durable : false
+        })
+
+        channel.consume(conversationQueue, function(msg){
+            var conversation = JSON.parse(msg.content.toString());
+            console.log(conversation);
+
+            socket.emit("newConversation",conversation);
+            console.log("event emmited conversation");
+        },{
+            noAck : true
+        })
+
+
+        channel.assertQueue(messageQueue,{
+            durable : false
+        })
+
+        channel.consume(messageQueue, function(msg){
+            var message = JSON.parse(msg.content.toString());
+            console.log(message);
+            
+            socket.emit("newMessage",message);
+            console.log("event emmited message",socket.user.username);
+        },{
+            noAck : true
+        })
+    })
+    
+    
+  
     var USER = {};
+    
 
     User.findById(socket.user.id,(err,user) => {
         if(!err){
@@ -43,124 +93,75 @@ io.use(function(socket, next){
                 
                 USER = user;
                 var freinds = USER.freinds;
-                     
+                var activeUsers = [];
                 for(var  i = 0; i < freinds.length; i++){
                     
                     if(clients[freinds[i].user_id]){
-                        
-                        clients[freinds[i].user_id].emit("online",{id : socket.user.id, username : socket.user.username});
+                        activeUsers.push(freinds[i]);
+                        clients[freinds[i].user_id].emit("online",{user : socket.user});
                     }
                 }
+                
+                socket.emit("activeUsers",{activeUsers});
             }   
         }
     });
 
-    // Create Conversation event
-    // Checks if a conversation exists and if it doesn't it creates a conversation
-    socket.on("createConversation",(data) => {
-        
-        const users = data.users;
-        const userId = [];
-        users.forEach(user => {
-            userId.push({user_id : user});
-        })
-        
-        var conversation = new Conversation({
-            Users : userId
-        });
-        
-        Conversation.find({'Users.user_id' : { $all : users}},(err,data) => {
-            if(!err){
-                if(data){
-                    if(data.length){
-                        
-                        socket.emit("Error : Conversation already exists");
-                    }
-                    else{
-                        conversation.save((err,conversation) => {
-                            if(!err){
-
-                                if(conversation){
-                                    // console.log(conversation);
-                                    socket.emit("Success : Conversation created");
-                                }
-                                else{
-                                    socket.emit("Error : Failed to create conversation");
-                                }
-                            }
-                            else{
-                                socket.emit("Error : Failed to create conversation");
-                            }
-                        });
-                    }
-                }
-                else{
-                    socket.emit("Error : Can't create conversation");
-                }
-            }
-            else{
-                socket.emit("Error : Can't create conversation");
-            }
-        })
-
-    });
-
-    socket.on("createMessage",(data) => {
-        
-        var message = new Message({
-            conversationID : data.conversationID,
-            fromId : data.fromId,
-            toId : data.toId,
-            content : data.content
-        });
-        
-        clients[data.toId].emit("newMessage",data);
-        
-        message.save((err,message) => {
-            if(!err){
-                if(message){
-
-                }
-                else{
-                    socket.emit("Error : Failed to create message");
-                }
-            }
-            else{
-                socket.emit("Error : Can't create message");
-            }
-        })
-    });
-
-
+    
     socket.on("typing",(data) => {
-        console.log("typing " + data.toId);
+        
         
         if(clients[data.toId]){
-            clients[data.toId].emit("typing",socket.user);
+            clients[data.toId].emit("typing",{id : socket.user.id});
         }
         
     });
 
-    
+    socket.on("stop-typing",(data) => {
+        
+        
+        if(clients[data.toId]){
+            clients[data.toId].emit("stop-typing",{id : socket.user.id});
+        }
+        
+    });
+
+    socket.on("isOnline",(data) => {
+       
+        if(clients[data.id]){
+            socket.emit("isOnline",{id : data.id});
+        }
+        else{
+            socket.emit("isOffline",{id : data.id});
+        }
+    })
+
+
 
     socket.on("disconnect",function(){
-    
+        console.log("disconnected!");
         var freinds = USER.freinds;
-            //console.log(freinds);            
-            for(var  i = 0; i < freinds.length; i++){
-                
-                if(clients[freinds[i].user_id]){
-                    
-                    clients[freinds[i].user_id].emit("offline",{id : socket.user.id, username : socket.user.username});
+            if(freinds.length){
+                for(var  i = 0; i < freinds.length; i++){
+                    if(clients[freinds[i].user_id]){
+                        clients[freinds[i].user_id].emit("offline",{id : socket.user.id, username : socket.user.username});
+                    }
                 }
             }
-            delete clients[USER.id];
+            
+            delete clients[socket.user.id];
+            delete socket.query;
+
+            console.log("Count: " + Object.keys(clients).length)
+            queueConnection.close();
             
     });
-})
+
+});
+
+
+
 
 const socketIOPORT = 4000 | process.env.SOCKET_PORT;
 
-io.listen(socketIOPORT,() => {
-    console.log(`Socket started on port ${socketIOPORT}`);
-})
+io.listen(socketIOPORT);
