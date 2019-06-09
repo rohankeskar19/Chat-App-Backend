@@ -20,7 +20,7 @@ const Conversation = require("../models/Conversation");
 const Message = require("../models/Message");   
 
 
-const form = new multiparty.Form();
+
 
 aws.config.update({
     secretAccessKey : config.secretAccesKey,
@@ -57,6 +57,7 @@ var upload = multer({
 const singleUpload = upload.single('image');
 
 router.post('/profile-upload',Authentication.isAuthenticated,(req,res) => {
+    const form = new multiparty.Form();
     var bio = "";
     var id = "";
     form.parse(req,(err,fields,files) => {
@@ -591,37 +592,42 @@ router.post("/request-transaction",Authentication.isAuthenticated,(req,res) => {
                                                 User.findById(fromId,(err,user) => {
                                                     if(!err){
                                                         if(user){
-                                                            user.freinds.push(toUserData);
-                                                            user.save((err,user) => {
-                                                                if(!err){
-                                                                    if(user){
-                                                                        User.findById(toId,(err,user) => {
-                                                                            user.freinds.push(fromUserData);
-                                                                            user.save((err,user) => {
-                                                                                if(!err){
-                                                                                    if(user){
-                                                                                        return res.json({msg : "Success"});
-                                                                                    }
-                                                                                    else{
-                                                                                        return res.status(400).json({error : "User not found"});
-                                                                                    }
-                                                                                }
-                                                                                else{
-                                                                                    
-                                                                                    return res.status(500).json({error : "Failed to perform request"});
+                                                            if(indexOf(user.freinds,toUserData) == -1){
+                                                                user.freinds.push(toUserData);
+                                                                user.save((err,user) => {
+                                                                    if(!err){
+                                                                        if(user){
+                                                                            User.findById(toId,(err,user) => {
+                                                                                if(indexOf(user.freinds,fromUserData) == -1){
+                                                                                    user.freinds.push(fromUserData);
+                                                                                    user.save((err,user) => {
+                                                                                        if(!err){
+                                                                                            if(user){
+                                                                                                return res.json({msg : "Success"});
+                                                                                            }
+                                                                                            else{
+                                                                                                return res.status(400).json({error : "User not found"});
+                                                                                            }
+                                                                                        }
+                                                                                        else{
+                                                                                            
+                                                                                            return res.status(500).json({error : "Failed to perform request"});
+                                                                                        }
+                                                                                    })
                                                                                 }
                                                                             })
-                                                                        })
+                                                                        }
+                                                                        else{
+                                                                            return res.status(400).json({error : "User not found"});
+                                                                        }
                                                                     }
                                                                     else{
-                                                                        return res.status(400).json({error : "User not found"});
+                                                                        
+                                                                        return res.status(500).json({error : "Failed to perform request"});
                                                                     }
-                                                                }
-                                                                else{
-                                                                    
-                                                                    return res.status(500).json({error : "Failed to perform request"});
-                                                                }
-                                                            })
+                                                                })
+                                                            }
+                                                            
                                                         }
                                                         else{
                                                             return res.status(400).json({error : "User not found"});
@@ -756,17 +762,28 @@ router.get("/details",Authentication.isAuthenticated,(req,res) => {
 router.post("/conversation", Authentication.isAuthenticated, (req,res) => {
  
     const users = req.body.users;
-    
+    console.log(users);
     if(users && users.length > 1){
+
+        var sendingUsersObject = {};
 
         const usersToAdd = [];
         users.forEach(user => {
+            
             usersToAdd.push({
                 user_id : user.user_id,
                 username : user.username,
                 name : user.name,
                 profileUrl : user.profileUrl
             });
+            if(user.user_id == req.user.id){
+                sendingUsersObject = {
+                    user_id : user.user_id,
+                    username : user.username,
+                    name : user.name,
+                    profileUrl : user.profileUrl
+                }
+            }
         })
         
         
@@ -774,20 +791,19 @@ router.post("/conversation", Authentication.isAuthenticated, (req,res) => {
         var conversation = new Conversation({
             Users : usersToAdd
         });
+        console.log(conversation);
         
-        Conversation.find({'Users' : { $elemMatch : {$in : {usersToAdd}}}},(err,data) => {
+        Conversation.find({'Users' : { $elemMatch : sendingUsersObject}},(err,data) => {
             if(!err){
                 if(data){
-                    console.log("Data " + data);
+                    
                     if(data.length){
-                        console.log("Data1 " + data);
-                        data.forEach(conversation => {
-                            
-                            console.log("Hi1");
-                            const Users = conversation.Users;
-
-                            var count = 0;
-                              
+                        var count = 0;
+                        var currentConversation = {}
+                        data.forEach(conversation1 => {
+                            currentConversation = conversation1;
+                            const Users = conversation1.Users;
+                            count = 0;
                             Users.forEach(user => {
                                 var newUser = {
                                     user_id : user.user_id,
@@ -795,76 +811,74 @@ router.post("/conversation", Authentication.isAuthenticated, (req,res) => {
                                     name : user.name,
                                     profileUrl : user.profileUrl
                                 }
-                                console.log("Users to add ", usersToAdd);
-                                console.log("Index " + usersToAdd.indexOf(newUser));
-                                console.log("Incremented");
-                                console.log("User",newUser)
-                                if(usersToAdd.indexOf(newUser) > -1) {
-                                    console.log("Incremented");
-                                    
+                                
+                                
+                                if(indexOf(usersToAdd,newUser) > -1) {
                                     count++;
                                 }
+                                
                             })
-                            console.log("Count " + count);
-                            if(count == 2){
-                                console.log("Conversation Exists:");
-                                return res.json(conversation);
-                            }
-                            else if(count == 1){
-                                console.log("Conversation Does not exist creating a new one...:");
-                                conversation.save((err,conversation) => {
-                                    if(!err){
-                                        if(conversation){
-                                            //@TODO add the conversation to the rabbit message queue
-        
-                                            
-                                            amqp.connect('amqp://localhost', function(error0, connection) {
-                                                if (error0) {
-                                                    throw error0;
+                            console.log(count);
+                            
+                        })
+                        console.log(count);
+                        if(count == 2){
+                            console.log("Conversation Exists:");
+                            return res.json(currentConversation);
+                        }
+                        else if(count == 1){
+                            console.log("Conversation Does not exist creating a new one...:");
+                            
+                            conversation.save((err,data) => {
+                                if(!err){
+                                    if(data){
+                                        
+                                       amqp.connect('amqp://localhost', function(error0, connection) {
+                                            if (error0) {
+                                                throw error0;
+                                            }
+                                            connection.createChannel(function(error1, channel) {
+                                                if (error1) {
+                                                    throw error1;
                                                 }
-                                                connection.createChannel(function(error1, channel) {
-                                                    if (error1) {
-                                                        throw error1;
+    
+                                                var queue = "";
+                                                usersToAdd.forEach(user => {
+                                                    if(user.user_id != req.user.id){
+                                                        queue += user.user_id
                                                     }
-        
-                                                    var queue = "";
-                                                    usersToAdd.forEach(user => {
-                                                        if(user.user_id != req.user.id){
-                                                            queue += user.user_id
-                                                        }
-                                                    });
-        
-                                                    queue += "conversations";
-        
-                                                    
-                                                    var msg = JSON.stringify(conversation);
-        
-                                                    channel.assertQueue(queue, {
-                                                        durable: false
-                                                    })
-                                                    
-                                                    channel.sendToQueue(queue, Buffer.from(msg));
-        
-                                                    
                                                 });
-                                                setTimeout(function() {
-                                                    connection.close();
-                                                    
-                                                }, 500);
-        
+    
+                                                queue += "conversations";
+    
+                                                
+                                                var msg = JSON.stringify(data);
+    
+                                                channel.assertQueue(queue, {
+                                                    durable: false
+                                                })
+                                                
+                                                channel.sendToQueue(queue, Buffer.from(msg));
+    
+                                                
                                             });
-                                            return res.json(conversation);
-                                        }
-                                        else{
-                                            return res.status(400).json({error : "Invalid request"});
-                                        }
+                                            setTimeout(function() {
+                                                connection.close();
+                                                
+                                            }, 500);
+    
+                                        });
+                                        return res.json(data);
                                     }
                                     else{
-                                        return res.status(500).json({error : "Failed to process request try again1"});
+                                        return res.status(400).json({error : "Invalid request"});
                                     }
-                                });
-                            }
-                        })
+                                }
+                                else{
+                                    return res.status(500).json({error : "Failed to process request try again1"});
+                                }
+                            });
+                        }
                     }
                     else{
                         console.log("No conversation for user " + conversation);
@@ -951,51 +965,55 @@ router.post("/message", Authentication.isAuthenticated, (req, res) => {
             createdAt : message.timeStamp
         });
 
-        newMessage.save((err, message) => {
-            if(!err){
-                if(message){
-                    // @TODO add message to the queue
-                    amqp.connect('amqp://localhost', function(error0, connection) {
-                        if (error0) {
-                            throw error0;
-                        }
-                        connection.createChannel(function(error1, channel) {
-                            if (error1) {
-                                throw error1;
-                            }
-
-                            var queue = message.toId + "messages";
-                            var msg = JSON.stringify(message);
-
-                            channel.assertQueue(queue, {
-                                durable: false
-                            });
-                            channel.sendToQueue(queue, Buffer.from(msg));
-
-                            console.log(" [x] Sent %s", msg);
-                            setTimeout(function() {
-                                connection.close();
-                                
-                            }, 500);
-                        });
-                        
-                    });
-                    return res.json(message);
-                }
-                else{
-                    return res.status(400).json({error : "Invalid request"});
-                }
+        amqp.connect('amqp://localhost', function(error0, connection) {
+            if (error0) {
+                throw error0;
             }
-            else{
-                return res.status(500).json({error : "Failed to process request try agian"});
-            }
-        })
+            connection.createChannel(function(error1, channel) {
+                if (error1) {
+                    throw error1;
+                }
+
+                var queue = newMessage.toId + "messages";
+                var msg = JSON.stringify(newMessage);
+
+                channel.assertQueue(queue, {
+                    durable: false
+                });
+                channel.sendToQueue(queue, Buffer.from(msg));
+
+                
+                setTimeout(function() {
+                    connection.close();
+                    
+                }, 500);
+            });
+            
+        });
+        return res.json(newMessage);
+                
     }
     else{
         return res.status(400).json({error : "Invalid request"});
     }
 
 })
+
+function indexOf(array,object){
+    if(array.length){
+        
+        var elementFound = -1;
+        for(var i = 0; i < array.length; i++){
+            
+            if(array[i].user_id == object.user_id){
+                console.log(array[i].user_id  , object.user_id);
+                elementFound = i;
+            }
+        }
+        
+        return elementFound;
+    }
+}
 
 
 
