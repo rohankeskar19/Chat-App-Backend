@@ -4,7 +4,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const config = require('../config/keys');
 const amqp = require('amqplib/callback_api');
-const multiparty = require('multiparty');
+
 
 const aws = require('aws-sdk');
 const multer = require('multer');
@@ -57,22 +57,6 @@ var upload = multer({
 const singleUpload = upload.single('image');
 
 router.post('/profile-upload',Authentication.isAuthenticated,(req,res) => {
-    const form = new multiparty.Form();
-    var bio = "";
-    var id = "";
-    form.parse(req,(err,fields,files) => {
-        if(fields.bio.toString() && fields.id.toString()){
-            console.log(fields.bio.toString(),fields.id.toString());
-            bio = fields.bio.toString();
-            id = fields.id.toString();
-        }
-        else{
-            console.log("error occured");
-            return res.status(400).json({error : "Invalid request"});
-        }
-        
-    })
-
     singleUpload(req,res,(err) => {
             
         if(err){
@@ -80,12 +64,10 @@ router.post('/profile-upload',Authentication.isAuthenticated,(req,res) => {
         }
         else{
             console.log(req.file.location)
-            User.findById(id,(err,data) => {
+            User.findById(req.user.id,(err,data) => {
                 if(!err){
                     if(data){
-                        
-                            data.profileUrl = req.file.location;
-                            data.bio = bio;
+                        data.profileUrl = req.file.location;
                             data.save((err,data) => {
                                 if(!err){
                                     if(data){
@@ -95,7 +77,7 @@ router.post('/profile-upload',Authentication.isAuthenticated,(req,res) => {
                                             email : data.email,
                                             username : data.username,
                                             profileUrl : data.profileUrl,
-                                            bio : data.bio
+                                            
                                         }
                                         var token = jwt.sign({"user" : user}, config.secret, {
                                             expiresIn : config.tokenExpiry
@@ -104,7 +86,7 @@ router.post('/profile-upload',Authentication.isAuthenticated,(req,res) => {
                                         return res.json({token});
                                     }
                                     else{
-                                        console.log("Ola");
+                                        
                                         return res.status(400).json({error : "Invalid request"});
                                     }
                                 }
@@ -114,7 +96,7 @@ router.post('/profile-upload',Authentication.isAuthenticated,(req,res) => {
                             })
                     }
                     else{
-                        console.log("Mola");
+                        
                         res.status(400).json({error : "Invalid request"});
                     }
                 }
