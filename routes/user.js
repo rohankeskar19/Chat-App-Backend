@@ -4,7 +4,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const config = require('../config/keys');
 const amqp = require('amqplib/callback_api');
-const multiparty = require('multiparty');
+
 
 const aws = require('aws-sdk');
 const multer = require('multer');
@@ -58,7 +58,10 @@ var upload = multer({
 const singleUpload = upload.single('image');
 
 router.post('/profile-upload',Authentication.isAuthenticated,(req,res) => {
+<<<<<<< HEAD
     
+=======
+>>>>>>> 3ba8f1b76aa4f97a26f83d2de7753da4f39ba261
     singleUpload(req,res,(err) => {
             
         if(err){
@@ -69,9 +72,13 @@ router.post('/profile-upload',Authentication.isAuthenticated,(req,res) => {
             User.findById(req.user.id,(err,data) => {
                 if(!err){
                     if(data){
+<<<<<<< HEAD
                         
                             data.profileUrl = req.file.location;
                             
+=======
+                        data.profileUrl = req.file.location;
+>>>>>>> 3ba8f1b76aa4f97a26f83d2de7753da4f39ba261
                             data.save((err,data) => {
                                 if(!err){
                                     if(data){
@@ -90,7 +97,7 @@ router.post('/profile-upload',Authentication.isAuthenticated,(req,res) => {
                                         return res.json({token});
                                     }
                                     else{
-                                        console.log("Ola");
+                                        
                                         return res.status(400).json({error : "Invalid request"});
                                     }
                                 }
@@ -100,7 +107,7 @@ router.post('/profile-upload',Authentication.isAuthenticated,(req,res) => {
                             })
                     }
                     else{
-                        console.log("Mola");
+                        
                         res.status(400).json({error : "Invalid request"});
                     }
                 }
