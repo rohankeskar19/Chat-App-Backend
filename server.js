@@ -27,7 +27,7 @@ app.use("/api/user",users);
 app.use("/api/chat",chat);
 
 
-const PORT = 5000 || process.env.PORT;
+const PORT = 80 || process.env.PORT;
 
 app.listen(PORT,(req,res) => {
     console.log(`Server listening on port ${PORT}`);

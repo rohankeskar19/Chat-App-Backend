@@ -11,6 +11,7 @@ const multer = require('multer');
 const multerS3 = require('multer-s3');
 
 
+
 const validator = require('../validators/user');
 const Authentication = require('../middlewares/Authentication');
 
@@ -57,22 +58,7 @@ var upload = multer({
 const singleUpload = upload.single('image');
 
 router.post('/profile-upload',Authentication.isAuthenticated,(req,res) => {
-    const form = new multiparty.Form();
-    var bio = "";
-    var id = "";
-    form.parse(req,(err,fields,files) => {
-        if(fields.bio.toString() && fields.id.toString()){
-            console.log(fields.bio.toString(),fields.id.toString());
-            bio = fields.bio.toString();
-            id = fields.id.toString();
-        }
-        else{
-            console.log("error occured");
-            return res.status(400).json({error : "Invalid request"});
-        }
-        
-    })
-
+    
     singleUpload(req,res,(err) => {
             
         if(err){
@@ -80,12 +66,12 @@ router.post('/profile-upload',Authentication.isAuthenticated,(req,res) => {
         }
         else{
             console.log(req.file.location)
-            User.findById(id,(err,data) => {
+            User.findById(req.user.id,(err,data) => {
                 if(!err){
                     if(data){
                         
                             data.profileUrl = req.file.location;
-                            data.bio = bio;
+                            
                             data.save((err,data) => {
                                 if(!err){
                                     if(data){
@@ -95,7 +81,7 @@ router.post('/profile-upload',Authentication.isAuthenticated,(req,res) => {
                                             email : data.email,
                                             username : data.username,
                                             profileUrl : data.profileUrl,
-                                            bio : data.bio
+                                            
                                         }
                                         var token = jwt.sign({"user" : user}, config.secret, {
                                             expiresIn : config.tokenExpiry
@@ -592,12 +578,14 @@ router.post("/request-transaction",Authentication.isAuthenticated,(req,res) => {
                                                 User.findById(fromId,(err,user) => {
                                                     if(!err){
                                                         if(user){
+                                                            
                                                             if(indexOf(user.freinds,toUserData) == -1){
                                                                 user.freinds.push(toUserData);
                                                                 user.save((err,user) => {
                                                                     if(!err){
                                                                         if(user){
                                                                             User.findById(toId,(err,user) => {
+                                                                                
                                                                                 if(indexOf(user.freinds,fromUserData) == -1){
                                                                                     user.freinds.push(fromUserData);
                                                                                     user.save((err,user) => {
@@ -954,8 +942,13 @@ router.post("/conversation", Authentication.isAuthenticated, (req,res) => {
 
 
 router.post("/message", Authentication.isAuthenticated, (req, res) => {
-    var message = req.body.message;
+
     
+
+
+    
+    var message = req.body.message;
+    console.log(message);
     if(message){
         const newMessage = new Message({
             conversationID : message.conversationID,
@@ -1000,11 +993,12 @@ router.post("/message", Authentication.isAuthenticated, (req, res) => {
 })
 
 function indexOf(array,object){
-    if(array.length){
-        
+    console.log(array);
+    if(array){
+    
         var elementFound = -1;
         for(var i = 0; i < array.length; i++){
-            
+            console.log(array[i]);
             if(array[i].user_id == object.user_id){
                 console.log(array[i].user_id  , object.user_id);
                 elementFound = i;
