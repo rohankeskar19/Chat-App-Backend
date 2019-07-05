@@ -58,10 +58,6 @@ var upload = multer({
 const singleUpload = upload.single('image');
 
 router.post('/profile-upload',Authentication.isAuthenticated,(req,res) => {
-<<<<<<< HEAD
-    
-=======
->>>>>>> 3ba8f1b76aa4f97a26f83d2de7753da4f39ba261
     singleUpload(req,res,(err) => {
             
         if(err){
@@ -72,13 +68,9 @@ router.post('/profile-upload',Authentication.isAuthenticated,(req,res) => {
             User.findById(req.user.id,(err,data) => {
                 if(!err){
                     if(data){
-<<<<<<< HEAD
-                        
-                            data.profileUrl = req.file.location;
-                            
-=======
                         data.profileUrl = req.file.location;
->>>>>>> 3ba8f1b76aa4f97a26f83d2de7753da4f39ba261
+                            
+
                             data.save((err,data) => {
                                 if(!err){
                                     if(data){
@@ -980,6 +972,9 @@ router.post("/message", Authentication.isAuthenticated, (req, res) => {
                 channel.assertQueue(queue, {
                     durable: false
                 });
+
+                channel.
+
                 channel.sendToQueue(queue, Buffer.from(msg));
 
                 
