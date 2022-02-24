@@ -11,7 +11,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "amqplib": "^0.5.3",
+    "amqplib": "^0.7.1",
     "aws-sdk": "^2.469.0",
     "bcryptjs": "^2.4.3",
     "express": "^4.16.4",
